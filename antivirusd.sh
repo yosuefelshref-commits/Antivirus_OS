@@ -22,7 +22,8 @@ new="directory-info.new"
 scan_dir() {
     for file in "$dir"/*
     do
-        if [ -f "$file" ]; then
+        if [ -f "$file" ];
+        then
             malicious_file=false
             case "$file" in
             *.exe|*.bat|*.vbs|*.scr|*.ps1)
