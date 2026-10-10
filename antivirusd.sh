@@ -8,6 +8,9 @@ fi
 dir="$1"
 malicious="$2"
 sec="$3"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+whitelist="$script_dir/whitelist.txt"
+touch "$whitelist"
 
 if [ ! -d "$dir" ]; 
 then
@@ -24,7 +27,15 @@ scan_dir() {
     do
         if [ -f "$file" ];
         then
+        filename=$(basename "$file")
+
+            if grep -Fxq "$filename" "$whitelist";
+            then
+                continue
+            fi
+
             malicious_file=false
+            
             case "$file" in
             *.exe|*.bat|*.vbs|*.scr|*.ps1)
                 malicious_file=true;;
@@ -55,7 +66,7 @@ do
     if ! cmp -s "$new" "$last"; 
     then
         scan_dir
-        cp "$new" "$last"
+        ls -l "$dir" > "$last"
     fi
     sleep "$sec"
 done

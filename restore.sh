@@ -7,6 +7,9 @@ fi
 
 dir="$1"
 malicious="$2"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+whitelist="$script_dir/whitelist.txt"
+touch "$whitelist"
 
 if [ ! -d "$dir" ]; then
     echo "Error: directory does not exist."
@@ -28,10 +31,10 @@ if [ "${#files[@]}" -eq 0 ]; then
     exit 0
 fi
 
-echo "Malicious files:"
+echo "Choose a file:"
 for i in "${!files[@]}";
 do
-    echo "$((i + 1)). ${files[$i]}"
+    echo "$((i + 1)): ${files[$i]}"
 done
 
 read -p "Choose a file number:" choice
@@ -43,22 +46,29 @@ fi
 index=$((choice - 1))
 file="${files[$index]}"
 
-echo "1. Restore to $dir"
-echo "2. Permanently delete"
-echo "3. Leave as-is and return to list"
+echo "For $(basename "$file"):"
+echo "1: Restore this file back into dir (it was a false positive)"
+echo "2: Permanently delete this file from malicious_dir (it was genuinely malicious)"
+echo "3: Go back"
 
 read -p "Choose an option:" action
 
 case "$action" in
     1)
-        mv "$file" "$dir/"
-        echo "Restored $file to $dir."
-        break
-        ;;
+        filename=$(basename "$file")
+        if mv "$file" "$dir/";
+        then
+            if ! grep -Fxq "$filename" "$whitelist";
+            then
+            echo "$filename" >> "$whitelist"
+            fi
+            echo "Restored $filename to $dir."
+        fi
+    ;;
     2)
+        filename=$(basename "$file")
         rm "$file"
-        echo "Permanently deleted $file."
-        break
+        echo "$filename permanently deleted."
         ;;
     3)
         echo "Leaving file as-is."
